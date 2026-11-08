@@ -78,7 +78,7 @@ export function Footer({ logo, instagram }: { logo: string; instagram: string })
           href={instagram}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => track("instagram_clique")}
+          onClick={() => track("clique_instagram")}
           className="flex w-fit items-center gap-2 rounded-md transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           <InstagramLogo className="size-5" />

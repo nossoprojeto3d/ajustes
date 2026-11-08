@@ -54,7 +54,7 @@ Segredos de verdade (senhas, chaves privadas), se um dia existirem, não vão no
 
 Com ID configurado, aparece um aviso de cookies e os scripts só carregam depois do "Aceitar". Quem usa "Não rastrear" no navegador não é medido e não vê o aviso.
 
-Eventos enviados: `arquivo_lido`, `resumo_copiado`, `resposta_conferida`, `3mf_baixado`, `recomecar` e `instagram_clique`. Nunca vão para a medição o arquivo, o nome dele, o resumo ou a resposta do Claude.
+Eventos enviados: `arquivo_lido`, `resumo_copiado`, `resposta_conferida`, `3mf_baixado`, `recomecar`, `clique_instagram` (mesmo nome dos outros sites) e `clique_externo` (link do Claude). Nunca vão para a medição o arquivo, o nome dele, o resumo ou a resposta do Claude.
 
 ## Publicar (GitHub Pages)
 

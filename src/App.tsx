@@ -557,7 +557,7 @@ export default function App() {
           {/* Navegação flutuante */}
           <header className="fixed inset-x-0 top-3 z-40 px-3 sm:top-4">
             <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 rounded-2xl border border-hairline-strong bg-background/70 px-3 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:px-4">
-              <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" className="flex min-w-0 items-center gap-2.5 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
+              <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" onClick={() => track("clique_instagram")} className="flex min-w-0 items-center gap-2.5 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
                 <img src={LOGO} alt="" width={32} height={32} className="size-8 object-contain" />
                 <span className="truncate text-[15px] font-semibold tracking-tight">
                   Nosso Projeto 3D <span className="font-normal text-muted-foreground">/ Ajuste 3MF</span>
@@ -571,7 +571,7 @@ export default function App() {
                   Dúvidas
                 </a>
                 <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                  <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" onClick={() => track("instagram_clique")} aria-label="Abrir o Instagram @nossoprojeto3d (abre em outra aba)">
+                  <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" onClick={() => track("clique_instagram")} aria-label="Abrir o Instagram @nossoprojeto3d (abre em outra aba)">
                     <InstagramLogo className="size-5" />
                   </a>
                 </Button>
@@ -847,7 +847,7 @@ export default function App() {
                                 {copied ? "Copiado" : "Copiar resumo"}
                               </Button>
                               <Button size="lg" variant="outline" className="h-12 rounded-xl" asChild>
-                                <a href="https://claude.ai/new" target="_blank" rel="noopener noreferrer">
+                                <a href="https://claude.ai/new" target="_blank" rel="noopener noreferrer" onClick={() => track("clique_externo", { destino: "claude.ai" })}>
                                   Abrir o Claude
                                   <ArrowUpRight />
                                 </a>
