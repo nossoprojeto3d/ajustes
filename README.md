@@ -60,7 +60,7 @@ Eventos enviados: `arquivo_lido`, `resumo_copiado`, `resposta_conferida`, `3mf_b
 
 A publicação é automática: a cada envio para a branch `main` (ou `master`), o GitHub roda os testes, faz o build e publica. O arquivo está em `.github/workflows/deploy.yml`.
 
-Configuração, uma vez só: no repositório `ajuste-3mf`, vá em **Settings > Pages** e em **Source** escolha **GitHub Actions**. O site fica em `nossoprojeto3d.github.io/ajuste-3mf/`.
+Configuração, uma vez só: no repositório `ajustes`, vá em **Settings > Pages** e em **Source** escolha **GitHub Actions**. O site fica em `nossoprojeto3d.com.br/ajustes/` (repositório `ajustes`).
 
 Para publicar na mão, rode `npm run build` e publique o conteúdo de `dist`. O `base: './'` do Vite faz o site funcionar em qualquer subcaminho.
 

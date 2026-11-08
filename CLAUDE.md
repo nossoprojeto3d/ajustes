@@ -1,7 +1,7 @@
 # Ajuste 3MF
 
 App web que deixa a IA configurar projetos do Bambu Studio: lê o `.3mf`, monta um resumo para o Claude, aplica o JSON de resposta e devolve um `-ajustado.3mf`. Tudo no navegador, sem servidor e sem chave de API.
-Publicado em https://nossoprojeto3d.github.io/ajuste-3mf/. O README.md explica o fluxo completo.
+Publicado em https://nossoprojeto3d.com.br/ajustes/ (repositório `ajustes`; o antigo `/ajuste-3mf/` redireciona pelo site principal). O README.md explica o fluxo completo.
 
 ## Stack
 
