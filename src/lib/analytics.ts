@@ -25,9 +25,11 @@ function addScript(src: string) {
 const KEY = "nossoprojeto3d-medicao"
 export type Consent = "granted" | "denied" | null
 
-/** Só há o que perguntar se existe algum ID configurado e o navegador não pediu "Não rastrear". */
+/** Só há o que perguntar se existe algum ID configurado, o navegador não pediu "Não rastrear"
+ *  e a página está no site oficial (testes no computador e links temporários não entram nos números). */
 export function analyticsEnabled() {
-  return Boolean(GA_ID || PIXEL_ID) && navigator.doNotTrack !== "1"
+  const siteOficial = /(^|\.)nossoprojeto3d\.com\.br$/.test(location.hostname)
+  return Boolean(GA_ID || PIXEL_ID) && navigator.doNotTrack !== "1" && siteOficial
 }
 
 export function getConsent(): Consent {
