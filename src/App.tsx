@@ -690,7 +690,7 @@ export default function App() {
               </m.div>
             </div>
           </section>
-          <Footer logo={LOGO} instagram={INSTAGRAM} />
+          <Footer />
           </m.div>
           ) : (
           <m.div key="ferramenta" initial={{ opacity: 0, y: reduce ? 0 : 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: EASE }}>

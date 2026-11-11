@@ -1,4 +1,4 @@
-import { InstagramLogo, ShieldCheck } from "@phosphor-icons/react"
+import { ArrowUpRight, ShieldCheck } from "@phosphor-icons/react"
 
 import { track } from "@/lib/analytics"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -60,26 +60,35 @@ export function Duvidas({ open, onOpenChange }: { open: boolean; onOpenChange: (
   )
 }
 
-export function Footer({ logo, instagram }: { logo: string; instagram: string }) {
+/** Rodapé da home: só o que o topo não tem (privacidade e os outros apps). */
+const OUTROS_APPS = [
+  { nome: "Calculadora 3D", href: "https://nossoprojeto3d.com.br/calculadora/", destino: "calculadora" },
+  { nome: "Dicas", href: "https://nossoprojeto3d.com.br/dicas/", destino: "dicas" },
+]
+
+export function Footer() {
   return (
-    <footer className="border-t border-hairline max-sm:hidden">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:py-5">
-        <div className="flex items-center gap-2.5">
-          <img src={logo} alt="" width={28} height={28} loading="lazy" className="size-7 object-contain" />
-          <span>
-            <span className="font-medium text-foreground">Nosso Projeto 3D</span> · Fatiô
-          </span>
-        </div>
-        <a
-          href={instagram}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => track("clique_instagram")}
-          className="flex w-fit items-center gap-2 rounded-md transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
-        >
-          <InstagramLogo className="size-5" />
-          @nossoprojeto3d
-        </a>
+    <footer className="border-t border-hairline max-sm:[@media(max-height:719px)]:hidden">
+      <div className="mx-auto flex max-w-6xl items-center justify-center gap-6 px-4 py-4 text-[13px] text-muted-foreground sm:justify-between sm:px-6 lg:py-5">
+        <p className="flex items-center gap-2">
+          <ShieldCheck weight="duotone" className="size-[18px] shrink-0 text-primary-ink" />
+          Seu arquivo não sai do navegador
+        </p>
+        <nav aria-label="Outros apps da Nosso Projeto 3D" className="flex items-center gap-5 max-sm:hidden">
+          {OUTROS_APPS.map((a) => (
+            <a
+              key={a.destino}
+              href={a.href}
+              target="_blank"
+              rel="noopener"
+              onClick={() => track("clique_externo", { destino: a.destino, local: "fatio_rodape" })}
+              className="group flex items-center gap-1 rounded-md transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            >
+              {a.nome}
+              <ArrowUpRight weight="bold" aria-hidden="true" className="size-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+            </a>
+          ))}
+        </nav>
       </div>
     </footer>
   )
