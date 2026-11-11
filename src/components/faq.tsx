@@ -1,9 +1,8 @@
-import { m } from "motion/react"
 import { InstagramLogo, ShieldCheck } from "@phosphor-icons/react"
 
 import { track } from "@/lib/analytics"
-
-const EASE = [0.22, 1, 0.36, 1] as const
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 const QA: [string, string][] = [
   [
@@ -29,49 +28,46 @@ const QA: [string, string][] = [
   ],
 ]
 
-/** Dúvidas abertas lado a lado, sem sanfona: o título fica preso à esquerda enquanto as respostas rolam. */
-export function Faq() {
+/** Dúvidas numa gaveta lateral, aberta pelo botão "Dúvidas" do cabeçalho; cada pergunta abre ao clicar. */
+export function Duvidas({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   return (
-    <section id="duvidas" aria-labelledby="faq-title" className="border-t border-hairline">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.6fr)] lg:gap-16 lg:py-28">
-        <div className="grid content-start gap-4 lg:sticky lg:top-28">
-          <h2 id="faq-title" className="text-3xl font-semibold tracking-[-0.035em] sm:text-4xl">
-            Dúvidas comuns
-          </h2>
-          <p className="max-w-[36ch] text-muted-foreground">Por que usar o Claude, o que o app altera, privacidade e custo.</p>
-          <p className="mt-2 flex max-w-[36ch] items-start gap-2.5 rounded-xl border border-hairline-strong bg-card/60 p-4 text-sm text-muted-foreground">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-full gap-0 overflow-y-auto border-hairline-strong bg-background sm:max-w-md">
+        <SheetHeader className="px-5 pt-6 pb-2 sm:px-6">
+          <SheetTitle className="text-2xl font-semibold tracking-[-0.03em]">Dúvidas comuns</SheetTitle>
+          <SheetDescription className="sr-only">Por que usar o Claude, o que o app altera, privacidade e custo.</SheetDescription>
+        </SheetHeader>
+        <div className="grid gap-5 px-5 pb-8 sm:px-6">
+          <Accordion
+            type="single"
+            collapsible
+            onValueChange={(v) => v && track("duvida_aberta", { pergunta: Number(v) + 1 })}
+          >
+            {QA.map(([q, a], i) => (
+              <AccordionItem key={q} value={String(i)} className="border-hairline">
+                <AccordionTrigger className="py-4 text-[15px] font-medium hover:no-underline">{q}</AccordionTrigger>
+                <AccordionContent className="text-[15px] leading-relaxed text-muted-foreground">{a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+          <p className="flex items-start gap-2.5 rounded-xl border border-hairline-strong bg-card/60 p-4 text-sm text-muted-foreground">
             <ShieldCheck weight="duotone" className="mt-0.5 size-5 shrink-0 text-primary-ink" />
             Tudo roda no seu navegador. O arquivo, o nome dele e a resposta do Claude não são enviados para lugar nenhum.
           </p>
         </div>
-        <dl className="grid">
-          {QA.map(([q, a], i) => (
-            <m.div
-              key={q}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.6, delay: (i % 2) * 0.06, ease: EASE }}
-              className="grid gap-2 border-b border-hairline py-6 first:pt-0 last:border-b-0 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] sm:gap-8"
-            >
-              <dt className="font-medium">{q}</dt>
-              <dd className="text-muted-foreground">{a}</dd>
-            </m.div>
-          ))}
-        </dl>
-      </div>
-    </section>
+      </SheetContent>
+    </Sheet>
   )
 }
 
 export function Footer({ logo, instagram }: { logo: string; instagram: string }) {
   return (
-    <footer className="border-t border-hairline">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <footer className="border-t border-hairline max-sm:hidden">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:py-5">
         <div className="flex items-center gap-2.5">
           <img src={logo} alt="" width={28} height={28} loading="lazy" className="size-7 object-contain" />
           <span>
-            <span className="font-medium text-foreground">Nosso Projeto 3D</span> · Ajuste 3MF
+            <span className="font-medium text-foreground">Nosso Projeto 3D</span> · Fatiô
           </span>
         </div>
         <a

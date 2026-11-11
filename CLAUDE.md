@@ -1,7 +1,9 @@
-# Ajuste 3MF
+# Fatiô (antes Ajuste 3MF)
+
+O nome do app é **Fatiô** (com acento, como o Respondê). O repositório é `fatio` (antes `ajustes`) e a pasta local continua `ajuste-3mf`; a chave `ajuste3mf.prefs` do navegador não muda, para não perder as preferências de quem já usa.
 
 App web que deixa a IA configurar projetos do Bambu Studio: lê o `.3mf`, monta um resumo para o Claude, aplica o JSON de resposta e devolve um `-ajustado.3mf`. Tudo no navegador, sem servidor e sem chave de API.
-Publicado em https://nossoprojeto3d.com.br/ajustes/ (repositório `ajustes`; o antigo `/ajuste-3mf/` redireciona pelo site principal). O README.md explica o fluxo completo.
+Publicado em https://nossoprojeto3d.com.br/fatio/ (repositório `fatio`; os antigos `/ajustes/` e `/ajuste-3mf/` redirecionam pelo site principal, com `public/ajustes`, `public/ajuste-3mf` e o `404.astro` de lá). O README.md explica o fluxo completo.
 
 ## Stack
 
@@ -24,12 +26,12 @@ Todo push na `main` dispara o `.github/workflows/deploy.yml`, que roda os testes
 
 ## Arquivos
 
-- `src/App.tsx`: a tela. Hero com a cena 3D, depois a ferramenta com uma etapa em foco por vez (Arquivo, Claude, Aplicar) e a barra de etapas clicável no topo. O mesmo layout serve celular e desktop.
+- `src/App.tsx`: duas telas. A home (cena 3D, "Começar", "Ver um exemplo" e os 3 passos) e a ferramenta em `#ferramenta`, que ocupa exatamente a altura da tela (nada de rolar a página): etapas numa coluna à esquerda (linha no topo no celular) e um painel com as ações presas embaixo; se o conteúdo crescer, rola por dentro do painel. Na etapa 1, impressora e filamento lidos do arquivo aparecem numa frase com "Editar"; à vista ficam só uso, prioridade e observações. Evite texto de ajuda na tela. O voltar do navegador e o botão ‹ do cabeçalho levam à home; ler um arquivo (arrastar, exemplo) abre a ferramenta. O mesmo layout serve celular e desktop.
 - `src/components/print-scene.tsx`: vaso sendo impresso camada por camada (Three.js). Pausa fora da tela e fica parado com movimento reduzido.
-- `src/components/faq.tsx`: dúvidas e rodapé.
+- `src/components/faq.tsx`: dúvidas numa gaveta lateral (botão "Dúvidas" do cabeçalho), cada uma recolhida, e o rodapé.
 - `src/lib/threemf.js`: leitura, validação e gravação do 3MF, **sem dependências** (ZIP próprio). Toda mudança aqui precisa de teste em `tests/threemf.test.mjs`.
 - `src/lib/analytics.ts` + `src/components/consent-banner.tsx`: medição com consentimento.
-- `src/components/ui/`: componentes do shadcn. Só `native-select.tsx` e `sonner.tsx` foram modificados (ícones do Phosphor); não edite os outros, prefira compor por fora.
+- `src/components/ui/`: componentes do shadcn. Só `native-select.tsx`, `sonner.tsx` e `sheet.tsx` (import do `cn` corrigido para `@/lib/utils`; o CLI tentou instalar o pacote `cn` do npm) foram modificados (ícones do Phosphor); não edite os outros, prefira compor por fora.
 - `src/index.css`: tokens de cor, fontes, grão do fundo, borda que acende sob o cursor e brilho do título.
 
 ## Regras
@@ -38,7 +40,7 @@ Todo push na `main` dispara o `.github/workflows/deploy.yml`, que roda os testes
 - Só entram ajustes da lista de chaves conhecidas, dentro de faixas seguras (~55 chaves). Ao adicionar uma chave, defina a faixa e escreva o teste.
 - Toda chave alterada precisa entrar em `different_settings_to_system` (posição 0 para processo, uma por filamento, última para impressora). Sem isso, o Bambu Studio volta a chave para o valor do perfil do sistema ao abrir o projeto. Ao adicionar uma chave de filamento, inclua em `FILAMENT_KEYS` no `threemf.js`.
 - O `.env` vai para o repositório de propósito, porque o ID do Analytics é público. Segredo de verdade vai em `.env.local`.
-- Componente novo do shadcn: `npx shadcn@latest add <nome>` (o MCP do shadcn está instalado). Ainda não existe `components.json`; se o CLI pedir, crie com estilo new-york, Tailwind v4 e alias `@`.
+- Componente novo do shadcn: `npx shadcn@latest add <nome>` (o MCP do shadcn está instalado). O `components.json` existe (new-york, Tailwind v4, alias `@`). Depois de adicionar, confira o import do `cn` no arquivo novo.
 - Mantenha o projeto fora de pastas sincronizadas (iCloud, Dropbox), porque travam o servidor de desenvolvimento.
 
 ## Imagens

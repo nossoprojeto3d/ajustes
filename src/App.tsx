@@ -6,6 +6,9 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  CaretLeft,
+  ChatCircleText,
+  ClipboardText,
   Check,
   CheckCircle,
   CircleNotch,
@@ -25,13 +28,11 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldContent, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Kbd } from "@/components/ui/kbd"
 import { Label } from "@/components/ui/label"
 import { NativeSelect } from "@/components/ui/native-select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Toaster } from "@/components/ui/sonner"
-import { Faq, Footer } from "@/components/faq"
+import { Duvidas, Footer } from "@/components/faq"
 import { cn } from "@/lib/utils"
 import { track } from "@/lib/analytics"
 import { ConsentBanner } from "@/components/consent-banner"
@@ -81,6 +82,9 @@ const PREFS_KEY = "ajuste3mf.prefs"
 const PIECE_FIELDS = { use: DEFAULT_FORM.use, prio: DEFAULT_FORM.prio, notes: DEFAULT_FORM.notes }
 
 type View = 1 | 2 | 3
+
+type Tela = "home" | "ferramenta"
+const lerTela = (): Tela => (location.hash === "#ferramenta" ? "ferramenta" : "home")
 
 const STEPS: { n: View; title: string; hint: string }[] = [
   { n: 1, title: "Arquivo", hint: "Envie o projeto e confira a impressão" },
@@ -161,14 +165,11 @@ function SelectField({
   )
 }
 
-/** Título de cada etapa. Recebe o foco quando a etapa muda, para leitores de tela e teclado. */
-function StepHeading({ id, title, children, headingRef }: { id: string; title: string; children: ReactNode; headingRef: React.Ref<HTMLHeadingElement> }) {
+/** Barra de ações da etapa, presa embaixo do painel. */
+function Acoes({ children }: { children: ReactNode }) {
   return (
-    <div className="grid gap-1.5">
-      <h2 id={id} ref={headingRef} tabIndex={-1} className="text-2xl font-semibold tracking-[-0.03em] outline-none sm:text-[1.75rem]">
-        {title}
-      </h2>
-      <p className="max-w-[60ch] text-muted-foreground">{children}</p>
+    <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-2 border-t border-hairline bg-card/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-7">
+      {children}
     </div>
   )
 }
@@ -185,45 +186,36 @@ function Stepper({
   done: (v: View) => boolean
 }) {
   return (
-    <nav aria-label="Etapas" className="relative">
-      <ol className="relative grid grid-cols-3 gap-2">
-        {/* Trilho e preenchimento até a etapa atual */}
-        <span aria-hidden="true" className="absolute top-[19px] right-[16.66%] left-[16.66%] h-px bg-border" />
-        <m.span
-          aria-hidden="true"
-          className="absolute top-[19px] left-[16.66%] h-px w-[66.66%] origin-left bg-primary"
-          initial={false}
-          animate={{ scaleX: (view - 1) / 2 }}
-          transition={{ duration: 0.7, ease: EASE }}
-        />
+    <nav aria-label="Etapas" className="shrink-0 lg:w-48">
+      <ol className="grid grid-cols-3 gap-1.5 lg:grid-cols-1 lg:gap-1">
         {STEPS.map((s) => {
           const active = view === s.n
           const ok = done(s.n)
           const can = reachable(s.n)
           return (
-            <li key={s.n} className="relative flex justify-center">
+            <li key={s.n}>
               <button
                 type="button"
                 disabled={!can}
                 onClick={() => onSelect(s.n)}
                 aria-current={active ? "step" : undefined}
-                className="group flex flex-col items-center gap-2 rounded-lg px-2 py-0 text-center outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed"
+                className={cn(
+                  "group flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-left outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed max-lg:justify-center lg:py-2.5",
+                  active ? "bg-card text-foreground shadow-[inset_0_0_0_1px_var(--hairline-strong)]" : "text-muted-foreground",
+                  can && !active && "hover:bg-card/60 hover:text-foreground"
+                )}
               >
                 <span
                   className={cn(
-                    "relative grid size-10 place-items-center rounded-full border font-mono text-sm transition-[background-color,border-color,color,box-shadow] duration-300",
-                    active && "border-primary bg-primary text-primary-foreground shadow-[0_0_0_6px_color-mix(in_oklab,var(--primary)_18%,transparent),0_0_24px_-4px_var(--primary)]",
-                    !active && ok && "border-primary/60 bg-background text-primary-ink",
-                    !active && !ok && "border-border bg-background text-muted-foreground",
-                    can && !active && "group-hover:border-primary/80"
+                    "grid size-7 shrink-0 place-items-center rounded-full border font-mono text-xs transition-[background-color,border-color,color,box-shadow] duration-300",
+                    active && "border-primary bg-primary text-primary-foreground shadow-[0_0_16px_-4px_var(--primary)]",
+                    !active && ok && "border-primary/60 text-primary-ink",
+                    !active && !ok && "border-border"
                   )}
                 >
-                  {ok && !active ? <Check weight="bold" className="size-4" /> : s.n}
+                  {ok && !active ? <Check weight="bold" className="size-3.5" /> : s.n}
                 </span>
-                <span className={cn("text-sm font-medium transition-colors", active ? "text-foreground" : "text-muted-foreground", can && "group-hover:text-foreground")}>
-                  {s.title}
-                </span>
-                <span className="hidden max-w-[22ch] text-xs text-muted-foreground/80 md:block">{s.hint}</span>
+                <span className="truncate text-sm font-medium">{s.title}</span>
               </button>
             </li>
           )
@@ -234,10 +226,10 @@ function Stepper({
 }
 
 function HeroTitle() {
-  const words = "Seu 3MF configurado por IA.".split(" ")
+  const words = "Deixe a IA ajustar seu fatiamento.".split(" ")
   return (
-    <h1 id="hero-title" className="text-[clamp(2.6rem,7.2vw,4.75rem)] leading-[1.02] font-semibold tracking-[-0.045em]">
-      <span className="sr-only">Seu 3MF configurado por IA.</span>
+    <h1 id="hero-title" className="text-[clamp(2.3rem,min(7.2vw,7.6dvh),4.75rem)] leading-[1.02] font-semibold tracking-[-0.045em]">
+      <span className="sr-only">Deixe a IA ajustar seu fatiamento.</span>
       {/* O reflexo (.shine) fica em cada palavra, por dentro da animação: no Safari, o texto recortado
           num pai some quando os filhos animam numa camada própria. */}
       <span aria-hidden="true">
@@ -276,7 +268,6 @@ export default function App() {
   const [removeOv, setRemoveOv] = useState(false)
   const [downloaded, setDownloaded] = useState(false)
   const [busy, setBusy] = useState(false)
-  const [tab, setTab] = useState("resumo")
   const [view, setView] = useState<View>(1)
   const [copied, setCopied] = useState(false)
 
@@ -286,6 +277,19 @@ export default function App() {
   const focusOnEnter = useRef(false)
   const copiedTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const reduce = useReducedMotion()
+
+  // Duas telas: a home explica e a ferramenta fica em #ferramenta (o voltar do navegador volta à home)
+  const [tela, setTela] = useState<Tela>(lerTela)
+  const [duvidas, setDuvidas] = useState(false)
+  const veioDaHome = useRef(false)
+  useEffect(() => {
+    const onHash = () => setTela(lerTela())
+    window.addEventListener("hashchange", onHash)
+    return () => window.removeEventListener("hashchange", onHash)
+  }, [])
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [tela])
 
   useEffect(() => {
     try {
@@ -339,23 +343,11 @@ export default function App() {
   const set = <K extends keyof FormData3mf>(k: K, v: FormData3mf[K]) => setForm((f) => ({ ...f, [k]: v }))
 
   const summary = useMemo(() => (project ? buildSummary(project, form, fileName) : ""), [project, form, fileName])
-  const info = useMemo(() => {
-    if (!project) return []
-    const d = detect(project)
-    const rows: [string, string][] = [
-      ["Impressora", d.printer || "não informada"],
-      ["Bico", d.nozzle ? d.nozzle + " mm" : "não informado"],
-      ["Filamentos", d.types.length ? d.types.length + ": " + [...new Set(d.types)].join(", ") : "não informado"],
-      [
-        "Objetos",
-        project.objects.length
-          ? project.objects.length + ": " + project.objects.slice(0, 3).map((o) => o.name).join(", ") + (project.objects.length > 3 ? "…" : "")
-          : "não informado",
-      ],
-      ["Placas", String(project.plates || 1)],
-    ]
-    if (project.app) rows.push(["Salvo por", project.app])
-    return rows
+  const detalhes = useMemo(() => {
+    if (!project) return ""
+    const n = project.objects.length
+    const placas = project.plates || 1
+    return [n === 1 ? "1 objeto" : n + " objetos", placas === 1 ? "1 placa" : placas + " placas", project.app].filter(Boolean).join(" · ")
   }, [project])
 
   const selected = items.filter((it, i) => it.status === "change" && checked[i])
@@ -366,7 +358,25 @@ export default function App() {
   const reachable = (v: View) => v === 1 || !!project
   const done = (v: View) => (v === 1 ? !!project : v === 2 ? applied : downloaded)
 
+  function abrirFerramenta() {
+    if (location.hash === "#ferramenta") return
+    veioDaHome.current = true
+    location.hash = "ferramenta"
+    track("abrir_ferramenta")
+  }
+
+  function voltarHome() {
+    if (veioDaHome.current) {
+      veioDaHome.current = false
+      history.back()
+    } else {
+      history.pushState(null, "", location.pathname + location.search)
+      setTela("home")
+    }
+  }
+
   function scrollToTool() {
+    abrirFerramenta()
     const el = toolRef.current
     if (!el) return
     const top = el.getBoundingClientRect().top
@@ -402,7 +412,6 @@ export default function App() {
       setApplyError("")
       setDownloaded(false)
       setPaste("")
-      setTab("resumo")
       setView(1)
       track("arquivo_lido", { exemplo: example })
       toast.success("Arquivo lido: " + name)
@@ -507,7 +516,6 @@ export default function App() {
     setRemoveOv(false)
     setDownloaded(false)
     setPaste("")
-    setTab("resumo")
     setForm((f) => ({ ...f, ...PIECE_FIELDS }))
     track("recomecar")
     focusOnEnter.current = true
@@ -533,6 +541,7 @@ export default function App() {
       <LazyMotion features={domAnimation} strict>
         <a
           href="#ferramenta"
+          onClick={() => (veioDaHome.current = true)}
           className="fixed top-3 left-3 z-[70] -translate-y-20 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground focus:translate-y-0"
         >
           Pular para a ferramenta
@@ -557,19 +566,29 @@ export default function App() {
           {/* Navegação flutuante */}
           <header className="fixed inset-x-0 top-3 z-40 px-3 sm:top-4">
             <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 rounded-2xl border border-hairline-strong bg-background/70 px-3 shadow-[0_10px_40px_-20px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:px-4">
-              <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" onClick={() => track("clique_instagram")} className="flex min-w-0 items-center gap-2.5 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-                <img src={LOGO} alt="" width={32} height={32} className="size-8 object-contain" />
-                <span className="truncate text-[15px] font-semibold tracking-tight">
-                  Nosso Projeto 3D <span className="font-normal text-muted-foreground">/ Ajuste 3MF</span>
-                </span>
-              </a>
+              <div className="flex min-w-0 items-center gap-1">
+                {tela === "ferramenta" && (
+                  <Button variant="ghost" size="icon" className="-ml-1 shrink-0 text-muted-foreground hover:text-foreground" onClick={voltarHome} aria-label="Voltar ao início">
+                    <CaretLeft weight="bold" className="size-5" />
+                  </Button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => tela === "ferramenta" && voltarHome()}
+                  className="flex min-w-0 items-center gap-2.5 rounded-md text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                  <img src={LOGO} alt="" width={32} height={32} className="size-8 object-contain" />
+                  <span className="truncate text-[15px] font-semibold tracking-tight">
+                    <span className="max-sm:hidden">Nosso Projeto 3D </span>
+                    <span className="font-normal text-muted-foreground"><span className="max-sm:hidden">/ </span>Fatiô</span>
+                  </span>
+                </button>
+              </div>
               <nav aria-label="Atalhos" className="flex items-center gap-1">
-                <a href="#ferramenta" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground md:block">
-                  Ferramenta
-                </a>
-                <a href="#duvidas" className="hidden rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground md:block">
+                <Button variant="ghost" className="h-9 gap-1.5 px-3 text-sm text-muted-foreground hover:text-foreground" onClick={() => setDuvidas(true)}>
+                  <ChatCircleText className="size-[18px]" />
                   Dúvidas
-                </a>
+                </Button>
                 <Button asChild variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                   <a href={INSTAGRAM} target="_blank" rel="noopener noreferrer" onClick={() => track("clique_instagram")} aria-label="Abrir o Instagram @nossoprojeto3d (abre em outra aba)">
                     <InstagramLogo className="size-5" />
@@ -579,15 +598,18 @@ export default function App() {
             </div>
           </header>
 
+          <AnimatePresence mode="wait" initial={false}>
+          {tela === "home" ? (
+          <m.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} className="flex min-h-dvh flex-col overflow-clip">
           {/* Hero */}
-          <section aria-labelledby="hero-title" className="relative isolate">
+          <section aria-labelledby="hero-title" className="relative isolate flex flex-1 items-stretch lg:items-center">
             <div aria-hidden="true" className="bed-grid pointer-events-none absolute inset-0 -z-10" />
             <div
               aria-hidden="true"
               className="pointer-events-none absolute top-[18%] right-[-10%] -z-10 size-[min(70vw,640px)] rounded-full opacity-40 blur-3xl max-lg:top-[48%] max-lg:right-[-30%]"
               style={{ background: "radial-gradient(circle, color-mix(in oklab, var(--primary) 55%, transparent), transparent 65%)" }}
             />
-            <div className="mx-auto grid max-w-6xl items-center gap-6 px-4 pt-28 pb-10 sm:px-6 sm:pt-32 lg:min-h-[min(100dvh,820px)] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-10 lg:pt-24 lg:pb-16">
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pt-24 pb-4 sm:px-6 lg:grid lg:items-center sm:pt-28 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-10 lg:pt-24 lg:pb-6">
               <div className="grid gap-6">
                 <m.p
                   initial={{ opacity: 0, y: 8 }}
@@ -605,7 +627,7 @@ export default function App() {
                   transition={{ duration: 0.7, delay: 0.45, ease: EASE }}
                   className="max-w-[44ch] text-lg leading-relaxed text-muted-foreground"
                 >
-                  Envie seu projeto do Bambu Studio, diga o que você precisa e deixe a IA fazer os ajustes para você.
+                  Envie seu projeto do Bambu Studio, diga o que você precisa e receba o arquivo ajustado.
                 </m.p>
                 <m.div
                   initial={{ opacity: 0, y: 12 }}
@@ -613,22 +635,43 @@ export default function App() {
                   transition={{ duration: 0.7, delay: 0.55, ease: EASE }}
                   className="flex flex-wrap items-center gap-3"
                 >
-                  <Button size="lg" className="btn-hot h-12 rounded-xl px-5 text-[15px] max-sm:flex-1" onClick={() => fileInput.current?.click()}>
-                    <UploadSimple weight="bold" />
-                    Escolher arquivo .3mf
+                  <Button size="lg" className="btn-hot h-12 rounded-xl px-5 text-[15px] max-sm:flex-1" onClick={abrirFerramenta}>
+                    Começar
+                    <ArrowRight weight="bold" />
                   </Button>
                   <Button size="lg" variant="ghost" className="h-12 rounded-xl px-4 text-[15px] text-muted-foreground hover:text-foreground max-sm:flex-1" onClick={loadExample}>
                     Ver um exemplo
                     <ArrowRight />
                   </Button>
                 </m.div>
+                <m.ol
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.7, ease: EASE }}
+                  aria-label="Como funciona"
+                  className="grid max-w-[520px] grid-cols-3 gap-2 pt-2"
+                >
+                  {([
+                    [FileArrowUp, "Envie o .3mf"],
+                    [ClipboardText, "Peça ao Claude"],
+                    [DownloadSimple, "Baixe ajustado"],
+                  ] as const).map(([Icone, texto], i) => (
+                    <li key={texto} className="flex flex-col gap-2 rounded-xl border border-hairline bg-card/50 p-3 text-[13.5px] leading-snug text-muted-foreground sm:flex-row sm:items-center">
+                      <span className="flex items-center gap-1.5 text-foreground">
+                        <span className="font-mono text-xs text-primary-ink">{i + 1}</span>
+                        <Icone weight="duotone" className="size-[18px] text-primary-ink" />
+                      </span>
+                      {texto}
+                    </li>
+                  ))}
+                </m.ol>
               </div>
 
               <m.div
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 1.2, delay: 0.2, ease: EASE }}
-                className="relative h-[300px] sm:h-[380px] lg:h-[540px]"
+                className="relative min-h-[90px] flex-1 lg:h-[min(540px,calc(100dvh-210px))] lg:flex-none"
               >
                 <Suspense fallback={null}>
                   <PrintScene className="absolute inset-0" />
@@ -636,116 +679,122 @@ export default function App() {
               </m.div>
             </div>
           </section>
-
+          <Footer logo={LOGO} instagram={INSTAGRAM} />
+          </m.div>
+          ) : (
+          <m.div key="ferramenta" initial={{ opacity: 0, y: reduce ? 0 : 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: EASE }}>
           {/* Ferramenta: uma etapa em foco por vez */}
-          <main id="ferramenta" ref={toolRef} aria-label="Ferramenta" className="relative mx-auto max-w-6xl scroll-mt-28 px-4 pb-24 sm:px-6">
-            <div className="grid gap-8">
-              <Stepper view={view} onSelect={goTo} reachable={reachable} done={done} />
-              <p role="status" aria-live="polite" className="sr-only">
-                {statusText}
-              </p>
+          <main
+            ref={toolRef}
+            aria-label="Ferramenta"
+            className="mx-auto flex h-dvh max-w-6xl flex-col gap-3 px-3 pt-[84px] pb-3 sm:px-6 lg:flex-row lg:gap-6 lg:pt-[96px] lg:pb-6"
+          >
+            <Stepper view={view} onSelect={goTo} reachable={reachable} done={done} />
+            <p role="status" aria-live="polite" className="sr-only">
+              {statusText}
+            </p>
 
-              {/* Moldura dupla: casca fina por fora, núcleo por dentro */}
-              <div onPointerMove={trackSpot} className="spotlight rounded-[1.6rem] border border-hairline bg-white/[0.015] p-1.5 sm:p-2">
-                <div className="relative overflow-hidden rounded-[calc(1.6rem-0.5rem)] border border-hairline-strong bg-card shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                  <AnimatePresence
-                    mode="wait"
-                    initial={false}
-                    onExitComplete={() => {
-                      if (focusOnEnter.current) {
-                        focusOnEnter.current = false
-                        requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }))
-                      }
-                    }}
-                  >
-                    {view === 1 && (
-                      <m.section key="v1" aria-labelledby="s1" {...panel} className="grid gap-8 p-4 sm:p-8 lg:p-10">
-                        <StepHeading id="s1" title={project ? "Arquivo lido" : "Escolha o arquivo"} headingRef={headingRef}>
-                          {project
-                            ? "Confira se impressora e filamento estão certos. O app preencheu o que encontrou no projeto."
-                            : "Precisa ser um projeto salvo pelo Bambu Studio (Arquivo, Salvar projeto como)."}
-                        </StepHeading>
-
-                        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-10">
-                          <div className="grid content-start gap-4">
-                            <button
-                              type="button"
-                              onClick={() => fileInput.current?.click()}
-                              className={cn(
-                                "group relative grid w-full place-items-center gap-3 overflow-hidden rounded-2xl border border-dashed border-input bg-background/50 px-6 text-center outline-none transition-[border-color,background-color] duration-300 hover:border-primary/70 hover:bg-primary/[0.04] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                                project ? "py-6" : "py-12 sm:py-16",
-                                dragOver && "border-primary bg-primary/[0.06]"
-                              )}
-                            >
-                              <span className="grid size-12 place-items-center rounded-xl border border-hairline-strong bg-card text-primary-ink transition-transform duration-500 group-hover:-translate-y-0.5">
-                                {project ? <FileArrowUp weight="duotone" className="size-6" /> : <UploadSimple weight="bold" className="size-6" />}
-                              </span>
-                              <span className="grid gap-1">
-                                <span className="font-medium break-all">
-                                  {project ? fileName + (isExample ? " (exemplo)" : "") : "Escolher arquivo .3mf"}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                  {project ? "Clique ou solte outro arquivo para trocar." : "ou arraste o arquivo para qualquer lugar da página"}
-                                </span>
-                              </span>
+            {/* Painel da etapa: corpo rola por dentro só se precisar; ações fixas embaixo */}
+            <div
+              onPointerMove={trackSpot}
+              className="spotlight relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[1.4rem] border border-hairline-strong bg-card shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+            >
+              <AnimatePresence
+                mode="wait"
+                initial={false}
+                onExitComplete={() => {
+                  if (focusOnEnter.current) {
+                    focusOnEnter.current = false
+                    requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }))
+                  }
+                }}
+              >
+                {view === 1 && (
+                  <m.section key="v1" aria-labelledby="s1" {...panel} className="flex min-h-0 flex-1 flex-col">
+                    <h2 id="s1" ref={headingRef} tabIndex={-1} className="sr-only">
+                      {project ? "Arquivo lido" : "Escolha o arquivo"}
+                    </h2>
+                    <div className="grid min-h-0 flex-1 content-start gap-5 overflow-y-auto p-4 sm:p-6 lg:p-7">
+                      {!project ? (
+                        <div className="grid h-full place-content-center gap-4 py-6">
+                          <button
+                            type="button"
+                            onClick={() => fileInput.current?.click()}
+                            className={cn(
+                              "group grid w-full max-w-xl place-items-center gap-3 rounded-2xl border border-dashed border-input bg-background/50 px-8 py-12 text-center outline-none transition-[border-color,background-color] duration-300 hover:border-primary/70 hover:bg-primary/[0.04] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:px-16 sm:py-16",
+                              dragOver && "border-primary bg-primary/[0.06]"
+                            )}
+                          >
+                            <span className="grid size-12 place-items-center rounded-xl border border-hairline-strong bg-card text-primary-ink transition-transform duration-500 group-hover:-translate-y-0.5">
+                              <UploadSimple weight="bold" className="size-6" />
+                            </span>
+                            <span className="grid gap-1">
+                              <span className="font-medium">Escolher arquivo .3mf</span>
+                              <span className="text-sm text-muted-foreground">ou arraste para qualquer lugar da página</span>
+                            </span>
+                          </button>
+                          {fileError && (
+                            <Alert variant="destructive" className="max-w-xl">
+                              <WarningOctagon weight="duotone" />
+                              <AlertTitle>Não consegui usar este arquivo</AlertTitle>
+                              <AlertDescription>{fileError}</AlertDescription>
+                            </Alert>
+                          )}
+                          <p className="text-center text-sm text-muted-foreground">
+                            Sem um arquivo agora?{" "}
+                            <button type="button" onClick={loadExample} className="rounded font-medium text-primary-ink underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50">
+                              Ver um exemplo
                             </button>
-
-                            {fileError && (
-                              <Alert variant="destructive">
-                                <WarningOctagon weight="duotone" />
-                                <AlertTitle>Não consegui usar este arquivo</AlertTitle>
-                                <AlertDescription>{fileError}</AlertDescription>
-                              </Alert>
-                            )}
-
-                            {project && (
-                              <dl className="grid overflow-hidden rounded-xl border border-hairline-strong text-sm">
-                                {info.map(([k, v], i) => (
-                                  <m.div
-                                    key={k}
-                                    initial={{ opacity: 0, x: -6 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.4, delay: 0.05 * i, ease: EASE }}
-                                    className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 border-b border-hairline px-4 py-2.5 last:border-b-0"
-                                  >
-                                    <dt className="text-muted-foreground">{k}</dt>
-                                    <dd className="font-mono text-[13px] break-words">{v}</dd>
-                                  </m.div>
-                                ))}
-                              </dl>
-                            )}
-
-                            {project?.sliced && (
-                              <Alert className="border-warn/30 bg-warn-bg text-warn">
-                                <Warning weight="duotone" />
-                                <AlertTitle>Este arquivo já foi fatiado</AlertTitle>
-                                <AlertDescription className="text-inherit">
-                                  Depois de abrir o arquivo ajustado, fatie de novo no Bambu Studio para valer as novas configurações.
-                                </AlertDescription>
-                              </Alert>
-                            )}
-
-                            {!project && (
-                              <p className="text-sm text-muted-foreground">
-                                Sem um arquivo agora?{" "}
-                                <button type="button" onClick={loadExample} className="rounded font-medium text-primary-ink underline-offset-4 outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-ring/50">
-                                  Ver um exemplo
-                                </button>
-                              </p>
-                            )}
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Arquivo em uma linha */}
+                          <div className="flex items-center gap-3 rounded-xl border border-hairline-strong bg-background/50 p-3">
+                            <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-hairline-strong bg-card text-primary-ink">
+                              <FileArrowUp weight="duotone" className="size-5" />
+                            </span>
+                            <span className="grid min-w-0 flex-1">
+                              <span className="truncate font-medium">{fileName + (isExample ? " (exemplo)" : "")}</span>
+                              <span className="truncate text-[13px] text-muted-foreground">{detalhes}</span>
+                            </span>
+                            <Button variant="ghost" size="sm" className="shrink-0 text-muted-foreground hover:text-foreground" onClick={() => fileInput.current?.click()}>
+                              Trocar
+                            </Button>
                           </div>
+                          {fileError && (
+                            <Alert variant="destructive">
+                              <WarningOctagon weight="duotone" />
+                              <AlertTitle>Não consegui usar este arquivo</AlertTitle>
+                              <AlertDescription>{fileError}</AlertDescription>
+                            </Alert>
+                          )}
+                          {project.sliced && (
+                            <p className="-mt-2 flex items-center gap-2 px-1 text-[13px] text-warn">
+                              <Warning weight="duotone" className="size-4 shrink-0" />
+                              Já fatiado: depois de ajustar, fatie de novo no Bambu Studio.
+                            </p>
+                          )}
 
-                          <div className="grid content-start gap-5">
-                            <h3 className="text-base font-semibold">Impressora e filamento</h3>
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+                          {/* Impressão: já vem preenchida com o que o app leu no arquivo */}
+                          <fieldset className="grid gap-3">
+                            <legend className="mb-3 text-sm font-semibold">Impressão</legend>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                               <SelectField id="fPrinter" label="Impressora" value={form.printer} options={OPT.printer} onChange={(v) => set("printer", v)} className="col-span-2 sm:col-span-1" />
                               <SelectField id="fNozzle" label="Bico (mm)" value={form.nozzle} options={OPT.nozzle} onChange={(v) => set("nozzle", v)} />
                               <SelectField id="fAms" label="AMS" value={form.ams} options={OPT.ams} onChange={(v) => set("ams", v)} />
                               <SelectField id="fType" label="Tipo de filamento" value={form.filType} options={OPT.type} onChange={(v) => set("filType", v)} />
                               <SelectField id="fBrand" label="Marca" value={form.brand} options={BRANDS} onChange={(v) => set("brand", v)} />
+                            </div>
+                          </fieldset>
+
+                          {/* A peça */}
+                          <fieldset className="grid gap-3 border-t border-hairline pt-5">
+                            <legend className="sr-only">Peça</legend>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                              <SelectField id="fUse" label="Uso da peça" value={form.use} options={OPT.use} onChange={(v) => set("use", v)} className="col-span-2 sm:col-span-1" />
                               <SelectField id="fPrio" label="Prioridade" value={form.prio} options={OPT.prio} onChange={(v) => set("prio", v)} className="col-span-2 sm:col-span-1" />
-                              <SelectField id="fUse" label="Uso da peça" value={form.use} options={OPT.use} onChange={(v) => set("use", v)} className="col-span-2" />
-                              <Field className="col-span-2 gap-2">
+                              <Field className="col-span-2 gap-2 sm:col-span-1">
                                 <Label htmlFor="fNotes" className="text-[13px] font-normal text-muted-foreground">
                                   Observações (opcional)
                                 </Label>
@@ -754,284 +803,233 @@ export default function App() {
                                   name="notes"
                                   autoComplete="off"
                                   className="h-10 bg-background/60 dark:bg-background/60"
-                                  placeholder="Ex.: encaixe justo, vai ficar ao sol, peça de 30 cm…"
+                                  placeholder="Ex.: encaixe justo, vai ficar ao sol…"
                                   value={form.notes}
                                   onChange={(e) => set("notes", e.target.value)}
                                 />
-                                <FieldDescription>Quanto mais contexto, mais certeiras as sugestões.</FieldDescription>
                               </Field>
                             </div>
-                          </div>
-                        </div>
+                          </fieldset>
+                        </>
+                      )}
+                    </div>
+                    {project && (
+                      <Acoes>
+                        <span />
+                        <Button size="lg" className="btn-hot h-11 rounded-xl px-5 max-sm:flex-1" onClick={() => goTo(2)}>
+                          Continuar
+                          <ArrowRight weight="bold" />
+                        </Button>
+                      </Acoes>
+                    )}
+                  </m.section>
+                )}
 
-                        {project && (
-                          <div className="flex justify-end border-t border-hairline pt-6">
-                            <Button size="lg" className="btn-hot h-12 rounded-xl px-5 max-sm:w-full" onClick={() => goTo(2)}>
-                              Continuar para o Claude
-                              <ArrowRight weight="bold" />
-                            </Button>
-                          </div>
+                {view === 2 && project && (
+                  <m.section key="v2" aria-labelledby="s2" {...panel} className="flex min-h-0 flex-1 flex-col">
+                    <h2 id="s2" ref={headingRef} tabIndex={-1} className="sr-only">
+                      Peça as sugestões ao Claude
+                    </h2>
+                    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6 lg:flex-row lg:p-7">
+                      <div className="flex min-h-[260px] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-hairline-strong bg-background/70">
+                        <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-2">
+                          <span className="truncate font-mono text-xs text-muted-foreground" translate="no">
+                            resumo · {fileName}
+                          </span>
+                        </div>
+                        <textarea
+                          id="summary"
+                          readOnly
+                          value={summary}
+                          aria-label="Resumo do projeto para o Claude"
+                          spellCheck={false}
+                          className="block min-h-0 w-full flex-1 resize-none bg-transparent p-4 font-mono text-[12.5px] leading-relaxed text-foreground/90 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:ring-inset"
+                        />
+                      </div>
+                      <div className="grid content-start gap-2.5 lg:w-64">
+                        <p className="pb-1 text-sm text-muted-foreground">Copie, cole numa conversa nova do Claude e traga a resposta.</p>
+                        <Button size="lg" className="btn-hot h-12 rounded-xl" onClick={copySummary}>
+                          {copied ? <Check weight="bold" /> : <Copy weight="bold" />}
+                          {copied ? "Copiado" : "Copiar resumo"}
+                        </Button>
+                        <Button size="lg" variant="outline" className="h-12 rounded-xl" asChild>
+                          <a href="https://claude.ai/new" target="_blank" rel="noopener noreferrer" onClick={() => track("clique_externo", { destino: "claude.ai" })}>
+                            Abrir o Claude
+                            <ArrowUpRight />
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                    <Acoes>
+                      <Button variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={() => goTo(1)}>
+                        <ArrowLeft />
+                        Arquivo
+                      </Button>
+                      <Button size="lg" variant="secondary" className="h-11 rounded-xl px-5" onClick={() => goTo(3)}>
+                        Já tenho a resposta
+                        <ArrowRight weight="bold" />
+                      </Button>
+                    </Acoes>
+                  </m.section>
+                )}
+
+                {view === 3 && project && (
+                  <m.section key="v3" aria-labelledby="s3" {...panel} className="flex min-h-0 flex-1 flex-col">
+                    <h2 id="s3" ref={headingRef} tabIndex={-1} className="sr-only">
+                      Aplique e baixe
+                    </h2>
+                    <div className={cn("flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 sm:p-6 lg:overflow-hidden lg:p-7", applied ? "lg:flex-row" : "")}>
+                      <div className={cn("flex flex-col gap-3 lg:min-h-0", applied ? "lg:w-72" : "flex-1")}>
+                        <Label htmlFor="paste" className="text-[13px] font-normal text-muted-foreground">
+                          Resposta do Claude
+                        </Label>
+                        <Textarea
+                          id="paste"
+                          name="paste"
+                          value={paste}
+                          spellCheck={false}
+                          autoComplete="off"
+                          onChange={(e) => setPaste(e.target.value)}
+                          className={cn(
+                            "field-sizing-fixed min-h-28 resize-none bg-background/60 font-mono text-[12.5px] dark:bg-background/60",
+                            applied ? "h-28 lg:h-auto lg:flex-1" : "h-48 flex-1"
+                          )}
+                          placeholder={'Cole aqui a resposta inteira, por exemplo:\n{"alteracoes":[{"chave":"layer_height","valor":"0.16","motivo":"mais detalhe nas curvas"}]}'}
+                        />
+                        <Button size="lg" variant={applied ? "outline" : "default"} className={cn("h-11 rounded-xl", !applied && "btn-hot")} onClick={applyResponse} disabled={!paste.trim()}>
+                          {applied ? "Conferir de novo" : "Conferir alterações"}
+                        </Button>
+                        {applyError && (
+                          <Alert variant="destructive">
+                            <WarningOctagon weight="duotone" />
+                            <AlertTitle>Não consegui ler a resposta</AlertTitle>
+                            <AlertDescription>{applyError} Copie a resposta inteira do Claude e tente de novo.</AlertDescription>
+                          </Alert>
                         )}
-                      </m.section>
-                    )}
+                      </div>
 
-                    {view === 2 && project && (
-                      <m.section key="v2" aria-labelledby="s2" {...panel} className="grid gap-8 p-4 sm:p-8 lg:p-10">
-                        <StepHeading id="s2" title="Peça as sugestões ao Claude" headingRef={headingRef}>
-                          O resumo traz os dados do projeto e já pede a resposta no formato certo. O Claude devolve só o que vale mudar nessa peça, com o motivo.
-                        </StepHeading>
-
-                        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-8">
-                          <Tabs value={tab} onValueChange={setTab} className="min-w-0 gap-3">
-                            <TabsList className="max-sm:w-full">
-                              <TabsTrigger value="resumo">Resumo</TabsTrigger>
-                              <TabsTrigger value="formato">Formato da resposta</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="resumo">
-                              <div className="overflow-hidden rounded-xl border border-hairline-strong bg-background/70">
-                                <div className="flex items-center justify-between gap-3 border-b border-hairline px-4 py-2">
-                                  <span className="flex items-center gap-1.5" aria-hidden="true">
-                                    <span className="size-2.5 rounded-full bg-white/10" />
-                                    <span className="size-2.5 rounded-full bg-white/10" />
-                                    <span className="size-2.5 rounded-full bg-white/10" />
-                                  </span>
-                                  <span className="truncate font-mono text-xs text-muted-foreground" translate="no">
-                                    resumo · {fileName}
-                                  </span>
-                                </div>
-                                <textarea
-                                  id="summary"
-                                  readOnly
-                                  value={summary}
-                                  aria-label="Resumo do projeto para o Claude"
-                                  spellCheck={false}
-                                  className="block h-72 w-full resize-none bg-transparent p-4 font-mono text-[12.5px] leading-relaxed text-foreground/90 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/40 focus-visible:ring-inset sm:h-80"
-                                />
-                              </div>
-                            </TabsContent>
-                            <TabsContent value="formato">
-                              <div className="grid gap-3">
-                                <p className="text-sm text-muted-foreground">
-                                  O resumo já pede este formato ao Claude. Cada item traz a chave da configuração, o novo valor e o motivo.
-                                </p>
-                                <pre className="overflow-x-auto rounded-xl border border-hairline-strong bg-background/70 p-4 font-mono text-[12.5px] leading-relaxed">{`{
-  "resumo": "Peça decorativa com curvas, priorizando acabamento",
-  "alteracoes": [
-    { "chave": "layer_height", "valor": "0.16", "motivo": "mais detalhe nas curvas" },
-    { "chave": "wall_loops", "valor": 3, "motivo": "superfície mais firme" }
-  ]
-}`}</pre>
-                              </div>
-                            </TabsContent>
-                          </Tabs>
-
-                          <div className="grid content-start gap-5">
-                            <ol className="grid gap-4 text-sm">
-                              {[
-                                ["Copie o resumo", "Um clique leva o texto inteiro."],
-                                ["Cole numa conversa nova", "No Claude, sem precisar explicar nada."],
-                                ["Traga a resposta", "Cole o JSON na próxima etapa."],
-                              ].map(([t, d], i) => (
-                                <li key={t} className="grid grid-cols-[1.75rem_1fr] gap-3">
-                                  <span className="grid size-7 place-items-center rounded-lg border border-hairline-strong font-mono text-xs text-primary-ink">{i + 1}</span>
-                                  <span>
-                                    <span className="block font-medium">{t}</span>
-                                    <span className="text-muted-foreground">{d}</span>
-                                  </span>
-                                </li>
-                              ))}
-                            </ol>
-                            <div className="grid gap-2.5">
-                              <Button size="lg" className="btn-hot h-12 rounded-xl" onClick={copySummary}>
-                                {copied ? <Check weight="bold" /> : <Copy weight="bold" />}
-                                {copied ? "Copiado" : "Copiar resumo"}
-                              </Button>
-                              <Button size="lg" variant="outline" className="h-12 rounded-xl" asChild>
-                                <a href="https://claude.ai/new" target="_blank" rel="noopener noreferrer" onClick={() => track("clique_externo", { destino: "claude.ai" })}>
-                                  Abrir o Claude
-                                  <ArrowUpRight />
-                                </a>
-                              </Button>
-                              <span className="hidden items-center justify-center gap-1 pt-1 text-xs text-muted-foreground sm:flex">
-                                ou selecione o texto e use <Kbd>Ctrl</Kbd>
-                                <Kbd>C</Kbd>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-6">
-                          <Button variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={() => goTo(1)}>
-                            <ArrowLeft />
-                            Arquivo
-                          </Button>
-                          <Button size="lg" variant="secondary" className="h-12 rounded-xl px-5 max-sm:w-full" onClick={() => goTo(3)}>
-                            Já tenho a resposta
-                            <ArrowRight weight="bold" />
-                          </Button>
-                        </div>
-                      </m.section>
-                    )}
-
-                    {view === 3 && project && (
-                      <m.section key="v3" aria-labelledby="s3" {...panel} className="grid gap-8 p-4 sm:p-8 lg:p-10">
-                        <StepHeading id="s3" title="Aplique e baixe" headingRef={headingRef}>
-                          Cole a resposta do Claude. Você vê o valor de antes e o de depois de cada mudança e desmarca o que não quiser.
-                        </StepHeading>
-
-                        <div className={cn("grid gap-8", applied && "lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-10")}>
-                          <div className="grid content-start gap-3">
-                            <Label htmlFor="paste" className="text-[13px] font-normal text-muted-foreground">
-                              Resposta do Claude
-                            </Label>
-                            <Textarea
-                              id="paste"
-                              name="paste"
-                              value={paste}
-                              spellCheck={false}
-                              autoComplete="off"
-                              onChange={(e) => setPaste(e.target.value)}
-                              className={cn("field-sizing-fixed resize-none bg-background/60 font-mono text-[12.5px] dark:bg-background/60", applied ? "h-32 lg:h-56" : "h-48")}
-                              placeholder={'Cole aqui a resposta inteira, por exemplo:\n{"alteracoes":[{"chave":"layer_height","valor":"0.16","motivo":"mais detalhe nas curvas"}]}'}
-                            />
-                            <Button size="lg" variant={applied ? "outline" : "default"} className={cn("h-11 rounded-xl", !applied && "btn-hot")} onClick={applyResponse} disabled={!paste.trim()}>
-                              {applied ? "Conferir de novo" : "Conferir alterações"}
-                            </Button>
-                            {applyError && (
-                              <Alert variant="destructive">
-                                <WarningOctagon weight="duotone" />
-                                <AlertTitle>Não consegui ler a resposta</AlertTitle>
-                                <AlertDescription>{applyError} Copie a resposta inteira do Claude e tente de novo.</AlertDescription>
-                              </Alert>
-                            )}
+                      {applied && (
+                        <div className="flex min-w-0 flex-col gap-3 lg:min-h-0 lg:flex-1">
+                          {downloaded && (
+                            <m.div
+                              initial={{ opacity: 0, y: -8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.5, ease: EASE }}
+                              className="flex items-start gap-3 rounded-xl border border-add/30 bg-add-bg px-4 py-3 text-sm text-add"
+                            >
+                              <CheckCircle weight="duotone" className="mt-0.5 size-5 shrink-0" />
+                              <p>Arquivo gerado. Abra no Bambu Studio e fatie de novo.</p>
+                            </m.div>
+                          )}
+                          <div role="status" className="flex flex-wrap items-center gap-2 text-sm">
+                            <Badge className="tabular-nums">{counts.change + (counts.change === 1 ? " pronta para aplicar" : " prontas para aplicar")}</Badge>
+                            {counts.same > 0 && <Badge variant="secondary" className="tabular-nums">{counts.same + (counts.same === 1 ? " já estava assim" : " já estavam assim")}</Badge>}
+                            {counts.bad > 0 && <Badge variant="destructive" className="tabular-nums">{counts.bad + (counts.bad === 1 ? " ignorada" : " ignoradas")}</Badge>}
+                            {isExample && <span className="text-[13px] text-muted-foreground">Exemplo: o download libera com um arquivo seu.</span>}
                           </div>
 
-                          {applied && (
-                            <div className="grid min-w-0 content-start gap-5">
-                              {downloaded && (
-                                <m.div
-                                  initial={{ opacity: 0, y: -8 }}
+                          {/* A lista rola por dentro; a página não cresce */}
+                          <div className="grid content-start gap-3 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1">
+                            <ul className="grid gap-2">
+                              {items.map((it, i) => (
+                                <m.li
+                                  key={i}
+                                  initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
-                                  transition={{ duration: 0.5, ease: EASE }}
-                                  className="flex items-start gap-3 rounded-xl border border-add/30 bg-add-bg px-4 py-3 text-sm text-add"
+                                  transition={{ duration: 0.45, delay: Math.min(i, 12) * 0.045, ease: EASE }}
                                 >
-                                  <CheckCircle weight="duotone" className="mt-0.5 size-5 shrink-0" />
-                                  <p>Arquivo gerado. Abra no Bambu Studio, confira no preview e fatie de novo para valer as mudanças.</p>
-                                </m.div>
-                              )}
-
-                              <div role="status" className="flex flex-wrap items-center gap-2 text-sm">
-                                <Badge className="tabular-nums">{counts.change + (counts.change === 1 ? " pronta para aplicar" : " prontas para aplicar")}</Badge>
-                                {counts.same > 0 && <Badge variant="secondary" className="tabular-nums">{counts.same + (counts.same === 1 ? " já estava assim" : " já estavam assim")}</Badge>}
-                                {counts.bad > 0 && <Badge variant="destructive" className="tabular-nums">{counts.bad + (counts.bad === 1 ? " ignorada" : " ignoradas")}</Badge>}
-                              </div>
-
-                              <ul className="grid gap-2">
-                                {items.map((it, i) => (
-                                  <m.li
-                                    key={i}
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ duration: 0.45, delay: Math.min(i, 12) * 0.045, ease: EASE }}
+                                  <label
+                                    htmlFor={"chk" + i}
+                                    className={cn(
+                                      "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 rounded-xl border px-4 py-3 transition-[border-color,background-color,opacity] duration-200",
+                                      it.status === "change" ? "border-hairline-strong bg-background/50 hover:border-primary/50" : "cursor-default border-hairline bg-transparent",
+                                      it.status === "change" && !checked[i] && "opacity-60"
+                                    )}
                                   >
-                                    <label
-                                      htmlFor={"chk" + i}
-                                      className={cn(
-                                        "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 rounded-xl border px-4 py-3 transition-[border-color,background-color,opacity] duration-200",
-                                        it.status === "change" ? "border-hairline-strong bg-background/50 hover:border-primary/50" : "cursor-default border-hairline bg-transparent",
-                                        it.status === "change" && !checked[i] && "opacity-60"
-                                      )}
-                                    >
-                                      <Checkbox
-                                        id={"chk" + i}
-                                        className="mt-0.5"
-                                        checked={!!checked[i]}
-                                        disabled={it.status !== "change"}
-                                        aria-label={"Aplicar " + (it.spec ? it.spec.label : it.key)}
-                                        onCheckedChange={(v) => setChecked((c) => ({ ...c, [i]: v === true }))}
-                                      />
-                                      <span className="grid min-w-0 gap-1.5">
-                                        <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                          <span className={cn("font-medium", !it.spec && "font-mono text-sm")} translate={it.spec ? undefined : "no"}>{it.spec ? it.spec.label : it.key}</span>
-                                          {it.spec && (
-                                            <span className="font-mono text-xs text-muted-foreground" translate="no">
-                                              {it.key}
-                                            </span>
-                                          )}
-                                        </span>
-                                        {it.status === "change" && (
-                                          <span className="flex flex-wrap items-center gap-2 font-mono text-[13px] tabular-nums">
-                                            <span className="rounded-md bg-del-bg px-1.5 py-0.5 text-del line-through decoration-del/60">{fmtVal(it.spec, it.before)}</span>
-                                            <ArrowRight aria-label="para" className="size-3.5 text-muted-foreground" />
-                                            <span className="rounded-md bg-add-bg px-1.5 py-0.5 font-semibold text-add">{fmtVal(it.spec, it.after)}</span>
+                                    <Checkbox
+                                      id={"chk" + i}
+                                      className="mt-0.5"
+                                      checked={!!checked[i]}
+                                      disabled={it.status !== "change"}
+                                      aria-label={"Aplicar " + (it.spec ? it.spec.label : it.key)}
+                                      onCheckedChange={(v) => setChecked((c) => ({ ...c, [i]: v === true }))}
+                                    />
+                                    <span className="grid min-w-0 gap-1.5">
+                                      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                        <span className={cn("font-medium", !it.spec && "font-mono text-sm")} translate={it.spec ? undefined : "no"}>{it.spec ? it.spec.label : it.key}</span>
+                                        {it.spec && (
+                                          <span className="font-mono text-xs text-muted-foreground" translate="no">
+                                            {it.key}
                                           </span>
                                         )}
-                                        {it.status === "same" && <span className="font-mono text-[13px] text-muted-foreground tabular-nums">{fmtVal(it.spec, it.before)}</span>}
-                                        {it.msg && <span className="text-[13px] text-destructive">{it.msg}</span>}
-                                        {it.reason && <span className="max-w-[70ch] text-sm text-muted-foreground">{it.reason}</span>}
-                                        {it.conflicts.length > 0 && (
-                                          <span className="text-[13px] text-warn">Ajuste próprio em: {it.conflicts.join(", ")}. Nesses objetos o valor global é ignorado.</span>
-                                        )}
                                       </span>
-                                      <Badge variant={STATUS_VARIANT[it.status]}>{STATUS_LABEL[it.status]}</Badge>
-                                    </label>
-                                  </m.li>
-                                ))}
-                              </ul>
+                                      {it.status === "change" && (
+                                        <span className="flex flex-wrap items-center gap-2 font-mono text-[13px] tabular-nums">
+                                          <span className="rounded-md bg-del-bg px-1.5 py-0.5 text-del line-through decoration-del/60">{fmtVal(it.spec, it.before)}</span>
+                                          <ArrowRight aria-label="para" className="size-3.5 text-muted-foreground" />
+                                          <span className="rounded-md bg-add-bg px-1.5 py-0.5 font-semibold text-add">{fmtVal(it.spec, it.after)}</span>
+                                        </span>
+                                      )}
+                                      {it.status === "same" && <span className="font-mono text-[13px] text-muted-foreground tabular-nums">{fmtVal(it.spec, it.before)}</span>}
+                                      {it.msg && <span className="text-[13px] text-destructive">{it.msg}</span>}
+                                      {it.reason && <span className="max-w-[70ch] text-sm text-muted-foreground">{it.reason}</span>}
+                                      {it.conflicts.length > 0 && (
+                                        <span className="text-[13px] text-warn">Ajuste próprio em: {it.conflicts.join(", ")}. Nesses objetos o valor global é ignorado.</span>
+                                      )}
+                                    </span>
+                                    <Badge variant={STATUS_VARIANT[it.status]}>{STATUS_LABEL[it.status]}</Badge>
+                                  </label>
+                                </m.li>
+                              ))}
+                            </ul>
 
-                              {conflictItems.length > 0 && (
-                                <div className="grid gap-4">
-                                  <Alert className="border-warn/30 bg-warn-bg text-warn">
-                                    <Warning weight="duotone" />
-                                    <AlertTitle>Ajustes próprios nos objetos</AlertTitle>
-                                    <AlertDescription className="text-inherit">
-                                      Alguns objetos têm ajuste próprio que vence o valor global:{" "}
-                                      {[...new Set(conflictItems.flatMap((it) => it.conflicts.map((c) => `${c} (${it.key})`)))].join(", ")}.
-                                    </AlertDescription>
-                                  </Alert>
-                                  <Field orientation="horizontal">
-                                    <Checkbox id="rmOv" checked={removeOv} onCheckedChange={(v) => setRemoveOv(v === true)} />
-                                    <FieldContent>
-                                      <FieldLabel htmlFor="rmOv">Remover esses ajustes dos objetos</FieldLabel>
-                                      <FieldDescription>Assim o valor novo vale para a peça inteira.</FieldDescription>
-                                    </FieldContent>
-                                  </Field>
-                                </div>
-                              )}
-
-                              <div className="sticky bottom-3 z-10 -mx-1 grid gap-2 rounded-2xl border border-hairline-strong bg-popover/85 p-2 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.9)] backdrop-blur-xl sm:flex sm:flex-wrap">
-                                <Button size="lg" className="btn-hot h-12 rounded-xl px-5 sm:flex-1" onClick={download} disabled={!selected.length || isExample || busy}>
-                                  {busy ? <CircleNotch weight="bold" className="animate-spin" /> : <DownloadSimple weight="bold" />}
-                                  {busy ? "Gerando…" : selected.length ? `Baixar 3MF ajustado (${selected.length})` : "Baixar 3MF ajustado"}
-                                </Button>
-                                <Button size="lg" variant="outline" className="h-12 rounded-xl px-5" onClick={restart}>
-                                  <ArrowCounterClockwise weight="bold" />
-                                  {isExample ? "Começar com meu arquivo" : "Ajustar outro arquivo"}
-                                </Button>
-                              </div>
-                              {isExample && selected.length > 0 && (
-                                <p className="text-sm text-muted-foreground">Este é um exemplo de demonstração. O download libera quando você usar um arquivo seu.</p>
-                              )}
-                            </div>
-                          )}
+                            {conflictItems.length > 0 && (
+                              <Field orientation="horizontal" className="rounded-xl border border-warn/30 bg-warn-bg p-3 text-warn">
+                                <Checkbox id="rmOv" checked={removeOv} onCheckedChange={(v) => setRemoveOv(v === true)} />
+                                <FieldContent>
+                                  <FieldLabel htmlFor="rmOv">Remover os ajustes próprios dos objetos</FieldLabel>
+                                  <FieldDescription className="text-inherit opacity-80">
+                                    {[...new Set(conflictItems.flatMap((it) => it.conflicts.map((c) => `${c} (${it.key})`)))].join(", ")}
+                                  </FieldDescription>
+                                </FieldContent>
+                              </Field>
+                            )}
+                          </div>
                         </div>
-
-                        <div className="flex border-t border-hairline pt-6">
-                          <Button variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={() => goTo(2)}>
-                            <ArrowLeft />
-                            Resumo
+                      )}
+                    </div>
+                    <Acoes>
+                      <Button variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={() => goTo(2)}>
+                        <ArrowLeft />
+                        Resumo
+                      </Button>
+                      {applied && (
+                        <span className="flex flex-wrap justify-end gap-2 max-sm:w-full">
+                          <Button size="lg" variant="outline" className="h-11 rounded-xl px-4 max-sm:flex-1" onClick={restart}>
+                            <ArrowCounterClockwise weight="bold" />
+                            Começar do zero
                           </Button>
-                        </div>
-                      </m.section>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
+                          <Button
+                            size="lg"
+                            className="btn-hot h-11 rounded-xl px-5 max-sm:flex-1"
+                            onClick={download}
+                            disabled={!selected.length || isExample || busy}
+                            title={isExample ? "O download libera quando você usar um arquivo seu." : undefined}
+                          >
+                            {busy ? <CircleNotch weight="bold" className="animate-spin" /> : <DownloadSimple weight="bold" />}
+                            {busy ? "Gerando…" : `Baixar 3MF${selected.length ? ` (${selected.length})` : ""}`}
+                          </Button>
+                        </span>
+                      )}
+                    </Acoes>
+                  </m.section>
+                )}
+              </AnimatePresence>
             </div>
           </main>
-
-          <Faq />
-          <Footer logo={LOGO} instagram={INSTAGRAM} />
+          </m.div>
+          )}
+          </AnimatePresence>
         </div>
 
         {/* Aviso ao arrastar um arquivo sobre a página */}
@@ -1057,8 +1055,9 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        <Duvidas open={duvidas} onOpenChange={setDuvidas} />
         <ConsentBanner />
-        <Toaster position="bottom-center" />
+        <Toaster position="top-center" offset={92} mobileOffset={{ top: 84 }} />
       </LazyMotion>
     </MotionConfig>
   )
