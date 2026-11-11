@@ -31,6 +31,7 @@ Todo push na `main` dispara o `.github/workflows/deploy.yml`, que roda os testes
 - `src/components/faq.tsx`: dúvidas numa gaveta lateral (botão "Dúvidas" do cabeçalho), cada uma recolhida, e o rodapé.
 - `src/lib/threemf.js`: leitura, validação e gravação do 3MF, **sem dependências** (ZIP próprio). Toda mudança aqui precisa de teste em `tests/threemf.test.mjs`.
 - `src/lib/analytics.ts` + `src/components/consent-banner.tsx`: medição com consentimento.
+- `src/components/parceiro.tsx`: cupom da Voolt3D (link de afiliado e cupom iguais aos da calculadora). Fica no pé da coluna das etapas (só no computador) e aparece depois de baixar o arquivo (todos). O clique vai ao GA como `clique_afiliado` com `parceiro: voolt3d` (igual à calculadora) e `local: fatio_lateral | fatio_pos_download`.
 - `src/components/ui/`: componentes do shadcn. Só `native-select.tsx`, `sonner.tsx` e `sheet.tsx` (import do `cn` corrigido para `@/lib/utils`; o CLI tentou instalar o pacote `cn` do npm) foram modificados (ícones do Phosphor); não edite os outros, prefira compor por fora.
 - `src/index.css`: tokens de cor, fontes, grão do fundo, borda que acende sob o cursor e brilho do título.
 

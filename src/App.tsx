@@ -33,6 +33,7 @@ import { NativeSelect } from "@/components/ui/native-select"
 import { Textarea } from "@/components/ui/textarea"
 import { Toaster } from "@/components/ui/sonner"
 import { Duvidas, Footer } from "@/components/faq"
+import { ParceiroFaixa, ParceiroLateral } from "@/components/parceiro"
 import { cn } from "@/lib/utils"
 import { track } from "@/lib/analytics"
 import { ConsentBanner } from "@/components/consent-banner"
@@ -228,26 +229,36 @@ function Stepper({
 function HeroTitle() {
   const words = "Deixe a IA ajustar seu fatiamento.".split(" ")
   return (
-    <h1 id="hero-title" className="text-[clamp(2.3rem,min(7.2vw,7.6dvh),4.75rem)] leading-[1.02] font-semibold tracking-[-0.045em]">
-      <span className="sr-only">Deixe a IA ajustar seu fatiamento.</span>
+    <h1 id="hero-title" className="grid gap-[0.35em] font-semibold">
+      <span className="sr-only">Fatiô: deixe a IA ajustar seu fatiamento.</span>
+      {/* O nome é a marca, grande e em laranja; a promessa vem logo abaixo */}
+      <span aria-hidden="true" className="block overflow-hidden pb-[0.06em]">
+        <m.span
+          className="block text-[clamp(2.6rem,min(11vw,10dvh),6.25rem)] leading-[0.95] tracking-[-0.055em] text-primary"
+          initial={{ y: "105%" }}
+          animate={{ y: 0 }}
+          transition={{ duration: 0.9, delay: 0.05, ease: EASE }}
+        >
+          Fatiô
+        </m.span>
+      </span>
       {/* O reflexo (.shine) fica em cada palavra, por dentro da animação: no Safari, o texto recortado
           num pai some quando os filhos animam numa camada própria. */}
-      <span aria-hidden="true">
+      <span aria-hidden="true" className="text-[clamp(1.4rem,min(4.2vw,4.4dvh),2.75rem)] leading-[1.1] tracking-[-0.035em]">
         {words.map((w, i) => (
           <span key={i} className="inline-block overflow-hidden pb-[0.08em] align-top">
             <m.span
               className="inline-block"
               initial={{ y: "105%" }}
               animate={{ y: 0 }}
-              transition={{ duration: 0.9, delay: 0.08 + i * 0.07, ease: EASE }}
+              transition={{ duration: 0.9, delay: 0.2 + i * 0.06, ease: EASE }}
             >
-              <span className="shine" style={{ animationDelay: `${0.9 + i * 0.12}s` }}>
+              <span className="shine" style={{ animationDelay: `${1 + i * 0.12}s` }}>
                 {w}
               </span>
-              {i < words.length - 1 && " "}
             </m.span>
           </span>
-        ))}
+        )).flatMap((el, i) => (i < words.length - 1 ? [el, " "] : [el]))}
       </span>
     </h1>
   )
@@ -689,7 +700,11 @@ export default function App() {
             aria-label="Ferramenta"
             className="mx-auto flex h-dvh max-w-6xl flex-col gap-3 px-3 pt-[84px] pb-3 sm:px-6 lg:flex-row lg:gap-6 lg:pt-[96px] lg:pb-6"
           >
-            <Stepper view={view} onSelect={goTo} reachable={reachable} done={done} />
+            {/* Coluna das etapas; no computador, o cupom fica no pé dela */}
+            <div className="flex shrink-0 flex-col justify-between gap-4 lg:w-48">
+              <Stepper view={view} onSelect={goTo} reachable={reachable} done={done} />
+              <ParceiroLateral className="max-lg:hidden" />
+            </div>
             <p role="status" aria-live="polite" className="sr-only">
               {statusText}
             </p>
@@ -921,6 +936,7 @@ export default function App() {
                               <p>Arquivo gerado. Abra no Bambu Studio e fatie de novo.</p>
                             </m.div>
                           )}
+                          {downloaded && <ParceiroFaixa />}
                           <div role="status" className="flex flex-wrap items-center gap-2 text-sm">
                             <Badge className="tabular-nums">{counts.change + (counts.change === 1 ? " pronta para aplicar" : " prontas para aplicar")}</Badge>
                             {counts.same > 0 && <Badge variant="secondary" className="tabular-nums">{counts.same + (counts.same === 1 ? " já estava assim" : " já estavam assim")}</Badge>}
