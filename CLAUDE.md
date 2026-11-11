@@ -1,5 +1,7 @@
 # Fatiô (antes Ajuste 3MF)
 
+A versão anterior ao redesenho (Ajuste 3MF, página única) é o commit `4d1bf3c`; o backup oficial aponta para a versão Fatiô.
+
 O nome do app é **Fatiô** (com acento, como o Respondê). O repositório é `fatio` (antes `ajustes`) e a pasta local continua `ajuste-3mf`; a chave `ajuste3mf.prefs` do navegador não muda, para não perder as preferências de quem já usa.
 
 App web que deixa a IA configurar projetos do Bambu Studio: lê o `.3mf`, monta um resumo para o Claude, aplica o JSON de resposta e devolve um `-ajustado.3mf`. Tudo no navegador, sem servidor e sem chave de API.
